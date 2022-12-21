@@ -4,9 +4,9 @@
 // @description   Add a select list to compare prices of IKEA articles
 // @version  2.0.0
 // @grant    none
-// @author   Storm
 // @author   Alexandre Eliot
-// @include  https://www.ikea.com/*/*/p/*
+// @author   Storm
+// @match    https://www.ikea.com/*/*/p/*
 // ==/UserScript==
 window.addEventListener("load", function () {
 
