@@ -20,7 +20,7 @@ window.addEventListener("load", function () {
 
   // The base currency used in the country you are comparing to (the one you put in above ^^ )
   // List of currency codes: https://www.iban.com/currency-codes
-  let pageCurrencyCode = "EUR";
+  const pageCurrencyCode = "EUR";
 
   // The current exchange rate
   let exchangeRate = 1;
@@ -33,6 +33,7 @@ window.addEventListener("load", function () {
   let language = defaultCountries[0];
 
   let available = true;
+  let otherSiteCurrencyCode = null;
   let otherPrice;
   let otherSiteUri = "";
 
@@ -93,10 +94,15 @@ window.addEventListener("load", function () {
         try {
           const product = data.searchResultPage.products.main.items[0].product;
 
-          otherPrice = product.salesPrice.numeral * exchangeRate;
+          otherPrice = product.salesPrice.numeral;
+
+          if (typeof exchangeRate === 'number') {
+            otherPrice *= exchangeRate;
+          }
+
           otherSiteUri = product.pipUrl;
 
-          pageCurrencyCode = product.salesPrice.currencyCode;
+          otherSiteCurrencyCode = product.salesPrice.currencyCode;
 
           console.log("Other price found!");
           console.log("Site : " + otherSiteUri);
@@ -126,8 +132,16 @@ window.addEventListener("load", function () {
   function updateOtherPriceSpan() {
     let priceString = " N/A in other country";
     if (otherPrice) {
-      priceString = ` ${currency} ${(otherPrice).toFixed(2)}`;
+
+      priceString = (otherPrice).toFixed(2).toString();
+
+      if (typeof exchangeRate === 'number') {
+        priceString = `${currency} ${priceString}`;
+      } else if (otherSiteCurrencyCode) {
+        priceString = `${otherSiteCurrencyCode} ${priceString}`;
+      }
     }
+
 
     otherPriceSpan.innerHTML = priceString;
   }
@@ -173,7 +187,7 @@ window.addEventListener("load", function () {
       onExchangeRateChange();
 
     } else {
-      exchangeRate = 1;
+      exchangeRate = null;
     }
   }
 
@@ -183,14 +197,14 @@ window.addEventListener("load", function () {
   const metaTag = document.createElement('meta');
   metaTag.setAttribute("http-equiv", "Content-Security-Policy");
   metaTag.setAttribute("content", `
-    default-src *.localeplanet.com * self blob: data: gap:;
-    style-src *.localeplanet.com * self 'unsafe-inline' blob: data: gap:;
-    script-src *.localeplanet.com * self 'unsafe-eval' 'unsafe-inline' blob: data: gap:;
-    object-src *.localeplanet.com * self blob: data: gap:;
-    img-src *.localeplanet.com * self 'unsafe-inline' blob: data: gap:;
-    connect-src *.localeplanet.com * self 'unsafe-inline' blob: data: gap:;
-    frame-src *.localeplanet.com * self blob: data: gap:;
-  `);
+  default-src *.localeplanet.com * self blob: data: gap:;
+  style-src *.localeplanet.com * self 'unsafe-inline' blob: data: gap:;
+  script-src *.localeplanet.com * self 'unsafe-eval' 'unsafe-inline' blob: data: gap:;
+  object-src *.localeplanet.com * self blob: data: gap:;
+  img-src *.localeplanet.com * self 'unsafe-inline' blob: data: gap:;
+  connect-src *.localeplanet.com * self 'unsafe-inline' blob: data: gap:;
+  frame-src *.localeplanet.com * self blob: data: gap:;
+`);
 
   const priceModuleContainer = document.getElementsByClassName('pip-temp-price-module')?.[0];
 
@@ -275,14 +289,14 @@ window.addEventListener("load", function () {
     insertChild(anchor, labelElement);
   }
 
-  async function renderLangMapSelect() {
+  async function renderLangMapSelect({ anchor }) {
     const countryCodeList = defaultCountries;
 
     console.debug({ countryCodeList });
 
     if (priceModuleContainer && countryCodeList) {
       renderSelect({
-        anchor: priceModuleContainer,
+        anchor,
         name: 'country-code',
         label: 'Country',
         onChange: (value) => { setLanguage(value) },
@@ -291,14 +305,14 @@ window.addEventListener("load", function () {
     }
   }
 
-  async function renderCurrencySelect() {
+  async function renderCurrencySelect({ anchor }) {
     const currenciesList = await getCountryCurrenciesList();
 
     console.debug({ currenciesList });
 
     if (priceModuleContainer && currenciesList) {
       renderSelect({
-        anchor: priceModuleContainer,
+        anchor,
         name: 'currency',
         label: 'Currency',
         onChange: (value) => { setCurrency(value) },
@@ -350,8 +364,12 @@ window.addEventListener("load", function () {
     const priceSpan = document.getElementsByClassName(priceElementClassName)[0];
     const priceElement = document.getElementsByClassName(priceWrapperClassName)[0];
 
-    renderLangMapSelect();
-    renderCurrencySelect();
+    const selectWrapper = document.createElement('div');
+    selectWrapper.style.paddingBottom = '1em';
+    insertChild(priceModuleContainer, selectWrapper);
+
+    renderLangMapSelect({ anchor: selectWrapper });
+    renderCurrencySelect({ anchor: selectWrapper });
 
     if (priceSpan) {
       renderOtherPrice({ anchor: priceSpan })
