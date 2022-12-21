@@ -2,11 +2,11 @@
 // @name      IKEA Price Compare
 // @contributors  [Alexandre Eliot, Storm]
 // @description   Add a select list to compare prices of IKEA articles
-// @version  2.0.0
-// @grant    none
-// @author   Alexandre Eliot
-// @author   Storm
-// @match    https://www.ikea.com/*/*/p/*
+// @version   2.0.0
+// @grant     none
+// @author    Storm
+// @author    Alexandre Eliot
+// @match     https://www.ikea.com/*/*/p/*
 // ==/UserScript==
 window.addEventListener("load", function () {
 
@@ -116,7 +116,11 @@ window.addEventListener("load", function () {
   // #region dom updaters
 
   function updateOtherSiteButton() {
-    otherSiteLink.setAttribute('href', otherSiteUri);
+    let href = 'javascript:void(0)';
+    if (available) {
+      href = otherSiteUri;
+    }
+    otherSiteLink.setAttribute('href', href);
   }
 
   function updateOtherPriceSpan() {
@@ -311,8 +315,10 @@ window.addEventListener("load", function () {
 
       otherPriceSpan = document.createElement("span");
 
-      anchor[0].appendChild(otherPriceSpan);
-      anchor[0].lastChild.style.color = "#a00";
+      updateOtherPriceSpan();
+
+      anchor.appendChild(otherPriceSpan);
+      anchor.lastChild.style.color = "#a00";
 
     }
   }
@@ -323,7 +329,9 @@ window.addEventListener("load", function () {
 
     otherSiteLink = document.createElement("a");
     otherSiteLink.innerHTML = 'Take me there';
-    otherSiteLink.setAttribute('href', 'javascript:void(0)');
+
+    updateOtherSiteButton();
+
     otherSiteButton.appendChild(otherSiteLink)
 
     anchor.appendChild(otherSiteButton);
@@ -333,22 +341,20 @@ window.addEventListener("load", function () {
   function init() {
     updateExchangeRate();
     updateOtherPrice();
-    updateOtherSiteButton();
-    updateOtherPriceSpan();
   }
 
   function render() {
     const priceWrapperClassName = "pip-temp-price-module__price";
     const priceElementClassName = "pip-temp-price-module__primary-currency-price";
 
-    const priceSpan = document.getElementsByClassName(priceElementClassName);
+    const priceSpan = document.getElementsByClassName(priceElementClassName)[0];
     const priceElement = document.getElementsByClassName(priceWrapperClassName)[0];
 
     renderLangMapSelect();
     renderCurrencySelect();
 
     if (priceSpan) {
-      renderOtherPrice({ anchor: priceElement })
+      renderOtherPrice({ anchor: priceSpan })
     }
 
     if (priceElement) {
